@@ -1,0 +1,11 @@
+node_modules
+.DS_Store
+.env
+*.log
+
+# Local runtime data and secrets. Use DATA_DIR on production storage instead.
+data/*
+!data/.gitkeep
+
+screenshots/
+*.png

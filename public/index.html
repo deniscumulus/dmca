@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DMCA Claims Queue</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Portfolio</p>
+        <h1>DMCA claims queue</h1>
+      </div>
+      <div class="status-rail" aria-live="polite">
+        <span class="chip" id="siteCountChip">0 portfolio sites</span>
+        <span class="chip warn" id="claimCountChip">0 claimed domains</span>
+        <span class="chip" id="claimedUrlCountChip">0 claimed URLs</span>
+        <span class="chip" id="reviewCountChip">0 to review</span>
+        <span class="chip" id="submittedCountChip">0 claim submitted</span>
+        <span class="chip" id="resolvedCountChip">0 resolved</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel portfolio-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Portfolio</p>
+            <h2>Sites</h2>
+          </div>
+          <span class="count-pill" id="domainCount">0</span>
+        </div>
+
+        <form class="domain-form" id="domainForm">
+          <input
+            id="domainInput"
+            name="domain"
+            type="text"
+            autocomplete="off"
+            placeholder="example.com, example.rs"
+            aria-label="Site"
+          />
+          <button type="submit">Add</button>
+        </form>
+
+        <form class="bulk-form" id="bulkForm">
+          <textarea
+            id="bulkInput"
+            placeholder="Paste sites here, one per line"
+            aria-label="Bulk site import"
+            rows="6"
+          ></textarea>
+          <div class="bulk-actions">
+            <label class="mini-toggle">
+              <input id="replacePortfolio" type="checkbox" />
+              <span>Replace existing list</span>
+            </label>
+            <button type="submit">Import list</button>
+          </div>
+        </form>
+
+        <div class="domain-list" id="domainList"></div>
+      </section>
+
+      <section class="panel claims-panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Claims Queue</p>
+            <h2>Lumen notices</h2>
+          </div>
+          <button class="primary" id="scanClaimsButton" type="button">Scan all claims</button>
+        </div>
+
+        <div class="claim-summary" id="claimSummary"></div>
+
+        <div class="queue-tools">
+          <label class="field">
+            <span>Status</span>
+            <select id="statusFilter">
+              <option value="all">All statuses</option>
+              <option value="to_review">To review</option>
+              <option value="claim_submitted">Claim submitted</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Search</span>
+            <input id="claimSearch" type="search" autocomplete="off" placeholder="Domain, request ID, notice ID" />
+          </label>
+        </div>
+
+        <div class="claims-list" id="claimsList"></div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

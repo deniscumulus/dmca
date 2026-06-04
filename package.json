@@ -1,0 +1,17 @@
+{
+  "name": "copyright-portfolio-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node scripts/check.mjs",
+    "url-audit": "node scripts/url-audit.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.60.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

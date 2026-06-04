@@ -1,0 +1,480 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f7f4;
+  --surface: #ffffff;
+  --surface-2: #eef4f2;
+  --ink: #17201c;
+  --muted: #66736d;
+  --line: #dbe2de;
+  --accent: #0f766e;
+  --accent-strong: #0b5f59;
+  --warn: #a85519;
+  --danger: #b42318;
+  --ok: #147a3c;
+  --blue: #1d4ed8;
+  --shadow: 0 18px 48px rgba(23, 32, 28, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+button:hover {
+  border-color: #aebbb5;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+
+input,
+select {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+textarea {
+  min-height: 126px;
+  resize: vertical;
+  padding: 10px 12px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+a {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px clamp(18px, 3vw, 44px) 20px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar h1,
+.panel h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.topbar h1 {
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.status-rail,
+.claim-summary,
+.claim-metrics,
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-rail {
+  justify-content: flex-end;
+}
+
+.chip,
+.count-pill,
+.tracking-chip,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  gap: 6px;
+}
+
+.chip.ok,
+.tracking-chip.resolved,
+.status-pill.resolved {
+  border-color: rgba(20, 122, 60, 0.28);
+  color: var(--ok);
+  background: #edf8f1;
+}
+
+.chip.warn,
+.tracking-chip.to_review,
+.tracking-chip.in_progress,
+.status-pill.to_review {
+  border-color: rgba(168, 85, 25, 0.28);
+  color: var(--warn);
+  background: #fff7ed;
+}
+
+.chip.submitted,
+.tracking-chip.claim_submitted,
+.tracking-chip.claim_filed,
+.status-pill.claim_submitted {
+  border-color: rgba(29, 78, 216, 0.26);
+  color: var(--blue);
+  background: #eff6ff;
+}
+
+.tracking-chip.detected {
+  border-color: rgba(15, 118, 110, 0.28);
+  color: var(--accent);
+  background: #ecfdf5;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.7fr) minmax(520px, 1.6fr);
+  gap: 16px;
+  padding: 20px clamp(18px, 3vw, 44px) 44px;
+}
+
+.panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel h2 {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.domain-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 18px 0 14px;
+}
+
+.bulk-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.bulk-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mini-toggle input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--accent);
+}
+
+.domain-list,
+.claims-list {
+  display: grid;
+  gap: 10px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.domain-list {
+  max-height: 58vh;
+}
+
+.claims-list {
+  max-height: 68vh;
+}
+
+.domain-item,
+.claim-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.domain-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.domain-name {
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.remove-button {
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+  color: var(--danger);
+}
+
+.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: white;
+  font-weight: 800;
+}
+
+.primary:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+}
+
+.claim-summary {
+  margin: 18px 0;
+}
+
+.summary-text,
+.empty-state,
+.history-meta,
+.claim-parties {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.queue-tools {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.claim-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-left: 5px solid #d0d7de;
+}
+
+.claim-card.status-to_review {
+  border-left-color: var(--warn);
+  background: #fffdf8;
+}
+
+.claim-card.status-claim_submitted {
+  border-left-color: var(--blue);
+  background: #f8fbff;
+}
+
+.claim-card.status-resolved {
+  border-left-color: var(--ok);
+  background: #fbfefc;
+}
+
+.claim-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: 14px;
+  align-items: start;
+}
+
+.claim-head h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.status-select {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.claim-metrics span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.notice-actions {
+  margin-top: 2px;
+}
+
+.notice-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.notice-actions a:first-child {
+  border-color: rgba(15, 118, 110, 0.3);
+  background: #ecfdf5;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(20px);
+  max-width: min(560px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  padding: 12px 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  box-shadow: 0 18px 44px rgba(23, 32, 28, 0.28);
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 1060px) {
+  .workspace,
+  .queue-tools,
+  .claim-head {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .status-rail {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar h1 {
+    font-size: 30px;
+  }
+
+  .domain-form,
+  .bulk-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace {
+    padding-inline: 14px;
+  }
+}
