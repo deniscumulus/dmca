@@ -462,6 +462,8 @@ function startLumenClaimsScan(options) {
     totalDomains: 0,
     noticeCount: 0,
     newNoticeCount: 0,
+    cachedRequestCount: 0,
+    refreshedRequestCount: 0,
     currentDomain: null,
     currentRequestId: null,
     startedAt: new Date().toISOString()
@@ -487,6 +489,8 @@ function startLumenClaimsScan(options) {
         totalDomains: run.totalDomains,
         noticeCount: run.noticeCount,
         newNoticeCount: run.newNoticeCount,
+        cachedRequestCount: run.cachedRequestCount,
+        refreshedRequestCount: run.refreshedRequestCount,
         currentDomain: null,
         currentRequestId: null,
         runId: run.id,

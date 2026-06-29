@@ -138,13 +138,17 @@ Daily scheduled flow:
 1. Run the Google Transparency portfolio check for all portfolio domains.
 2. Use the newest Transparency run to find every domain with claim rows.
 3. Run the Claims Queue scanner for all of those claimed domains.
-4. Mark only previously unseen notice IDs as new for that run.
-5. Send an email digest only when `newNoticeCount > 0` or when scan errors occur, and only if SMTP/email alerts are configured.
-6. Export a Lumen access-request queue containing only active `to_review` claims. Claims already marked `claim_submitted` or `resolved` are excluded from this export.
+4. Reuse existing per-request Lumen details from `data/lumen-claims.json` whenever the `domain + requestId` pair is already known.
+5. Open Google request detail pages only for newly discovered request IDs, unless `forceRefreshKnown` is explicitly enabled.
+6. Mark only previously unseen notice IDs as new for that run.
+7. Send an email digest only when `newNoticeCount > 0` or when scan errors occur, and only if SMTP/email alerts are configured.
+8. Export a Lumen access-request queue containing only active `to_review` claims. Claims already marked `claim_submitted` or `resolved` are excluded from this export.
 
 `limit: 0` means scan all claimed domains from the latest Google Transparency run. A positive limit can still be passed for small test runs.
 
 The latest access-request queue export is stored on the run as `accessRequestQueue.exportPath`.
+
+The latest run also records `cachedRequestCount` and `refreshedRequestCount` so it is easy to confirm how much work was reused versus newly fetched.
 
 ## Verification Already Done
 
