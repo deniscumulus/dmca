@@ -9,3 +9,5 @@ data/*
 
 screenshots/
 *.png
+.vercel
+.env*

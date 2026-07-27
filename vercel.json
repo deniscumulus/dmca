@@ -1,0 +1,11 @@
+{
+  "experimentalServices": {
+    "dmca-claims-queue": {
+      "entrypoint": "api/index.js",
+      "routePrefix": "/",
+      "maxDuration": 300,
+      "memory": 3008,
+      "includeFiles": "public/**"
+    }
+  }
+}

@@ -21,7 +21,8 @@ import { runLumenClaimsQueueScan } from "./lib/lumen-claims.mjs";
 import { runSerpLumenScan } from "./lib/serp-lumen.mjs";
 import { exportReportedUrls, runUrlDeepScan } from "./lib/url-audit.mjs";
 
-const ROOT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const SERVER_FILE = fileURLToPath(import.meta.url);
+const ROOT_DIR = path.dirname(SERVER_FILE);
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const PORT = Number(process.env.PORT || 4177);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -47,7 +48,7 @@ let activeLumenClaimsStatus = {
 
 await ensureDataFiles();
 
-const server = http.createServer(async (request, response) => {
+export async function handleRequest(request, response) {
   try {
     if (!isAuthorized(request)) {
       response.writeHead(401, {
@@ -71,18 +72,25 @@ const server = http.createServer(async (request, response) => {
       error: error.message || "Unexpected server error."
     });
   }
-});
+}
 
-server.listen(PORT, HOST, () => {
-  const displayHost = HOST === "0.0.0.0" ? "127.0.0.1" : HOST;
-  console.log(`Copyright Portfolio Monitor running at http://${displayHost}:${PORT}`);
-});
+export function createServer() {
+  return http.createServer(handleRequest);
+}
 
-setInterval(() => {
-  checkSchedule().catch((error) => {
-    console.error("Scheduled check failed:", error.message);
+if (isCliEntrypoint()) {
+  const server = createServer();
+  server.listen(PORT, HOST, () => {
+    const displayHost = HOST === "0.0.0.0" ? "127.0.0.1" : HOST;
+    console.log(`Copyright Portfolio Monitor running at http://${displayHost}:${PORT}`);
   });
-}, 30000);
+
+  setInterval(() => {
+    checkSchedule().catch((error) => {
+      console.error("Scheduled check failed:", error.message);
+    });
+  }, 30000);
+}
 
 async function routeApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/state") {
@@ -549,6 +557,10 @@ function localDateKey(date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function isCliEntrypoint() {
+  return process.argv[1] && path.resolve(process.argv[1]) === SERVER_FILE;
 }
 
 function isAuthorized(request) {

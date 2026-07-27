@@ -9,6 +9,7 @@
     "url-audit": "node scripts/url-audit.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.5.0",
     "playwright": "1.60.0"
   },
   "engines": {
