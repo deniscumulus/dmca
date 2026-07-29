@@ -32,7 +32,14 @@ The repo includes:
 
 ```text
 Dockerfile
+docker-compose.yml
 render.yaml
+```
+
+For VPS/Docker deployment, use:
+
+```text
+DEPLOYMENT_CHECKLIST.md
 ```
 
 Recommended Render flow:

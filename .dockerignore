@@ -1,7 +1,8 @@
 node_modules
 .DS_Store
 .env
+.env*
+.vercel
 data
 screenshots
 *.log
-

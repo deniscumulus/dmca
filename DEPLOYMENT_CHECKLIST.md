@@ -1,117 +1,115 @@
-# DMCA Deployment Checklist
+# DMCA VPS/Docker Deployment Checklist
 
-This checklist is for deploying the DMCA Claims Queue app from GitHub to Vercel.
+This checklist is for deploying the DMCA Claims Queue app on a VPS or any Docker-capable server.
 
-## Current Deployment
+For historical Vercel notes, see `VERCEL_DEPLOYMENT_CHECKLIST.md`. The current live-server path should use this Docker checklist.
 
-- GitHub repo: `deniscumulus/dmca`
-- Vercel scope/team: `denis-cumulus`
-- Vercel project: `dmca`
-- Production alias: `https://dmca-murex.vercel.app`
-- Current production deployment checked on `2026-07-27`: `READY`
-- Vercel framework preset: `Services`
-- Vercel entrypoint: `api/index.js`
-- Vercel config: `vercel.json`
+## What This App Needs
 
-Important: the repo also has `Dockerfile` and `render.yaml`, but those are for a Render/VPS/container deployment path. Vercel does not use that Dockerfile for the current deployment.
+- A long-running Node container.
+- Persistent storage mounted at `/app/data`.
+- Basic Auth enabled before exposing the dashboard.
+- Optional SMTP variables for email notifications.
+- Outbound HTTPS access from the server for Google Transparency/Lumen checks.
 
-## Pre-Flight
-
-- Confirm local dependencies install:
-
-```sh
-npm install
-```
-
-- Confirm syntax checks pass:
-
-```sh
-node --check server.mjs
-node --check api/index.js
-node --check lib/store.mjs
-node --check lib/lumen-claims.mjs
-node --check lib/notify.mjs
-```
-
-- Confirm local app starts:
-
-```sh
-npm start
-```
-
-- Open local app:
+The Docker image already uses Microsoft Playwright's base image:
 
 ```text
-http://127.0.0.1:4177/
+mcr.microsoft.com/playwright:v1.60.0-noble
 ```
 
-- Confirm local state has expected portfolio/claim data:
+That image includes the browser dependencies needed by Playwright. Do not deploy this as a plain Node image unless you also install browser dependencies.
 
-```sh
-curl -s http://127.0.0.1:4177/api/state \
-  | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const x=JSON.parse(s); console.log({domains:x.portfolio.domains.length, claims:Object.keys(x.lumenClaims.notices||{}).length});})'
-```
+## Repository Files
 
-Expected initial seeded state was:
+Relevant deployment files:
 
 ```text
-190 portfolio domains
-551 claim notices
+Dockerfile
+docker-compose.yml
+.env.example
+.dockerignore
+DEPLOYMENT_CHECKLIST.md
 ```
 
-## Vercel Project Link
-
-- Login if needed:
-
-```sh
-npx vercel login
-```
-
-- Link local repo to the existing Vercel project:
-
-```sh
-npx vercel link --yes --project dmca --scope denis-cumulus
-```
-
-- Confirm project settings:
-
-```sh
-npx vercel project inspect dmca --scope denis-cumulus
-```
-
-Expected:
+Vercel-only files can remain in the repo, but they are not used for VPS/Docker deployment:
 
 ```text
-Framework Preset: Services
-Node.js Version: 24.x
-Root Directory: .
+api/index.js
+vercel.json
+VERCEL_DEPLOYMENT_CHECKLIST.md
 ```
 
-## Required Vercel Environment Variables
+## Server Prerequisites
 
-Production must have:
+On the VPS, install:
+
+```sh
+docker --version
+docker compose version
+git --version
+```
+
+Recommended server directory:
+
+```sh
+/opt/dmca
+```
+
+Recommended public port behind reverse proxy:
 
 ```text
-BLOB_READ_WRITE_TOKEN
+127.0.0.1:4177
+```
+
+If there is no reverse proxy yet, expose `4177` temporarily only while testing.
+
+## First-Time Server Setup
+
+Clone the repo:
+
+```sh
+sudo mkdir -p /opt/dmca
+sudo chown "$USER":"$USER" /opt/dmca
+git clone https://github.com/deniscumulus/dmca.git /opt/dmca
+cd /opt/dmca
+```
+
+Create runtime data directory:
+
+```sh
+mkdir -p data
+chmod 700 data
+```
+
+Create env file:
+
+```sh
+cp .env.example .env
+nano .env
+```
+
+Minimum required values:
+
+```text
+BASIC_AUTH_USER=change-me
+BASIC_AUTH_PASS=change-me
+PUBLIC_PORT=4177
+```
+
+Important: do not set `BLOB_READ_WRITE_TOKEN` on VPS unless you intentionally want to use Vercel Blob instead of the mounted `/app/data` volume.
+
+## Required Environment Variables
+
+Required:
+
+```text
+NODE_ENV=production
+HOST=0.0.0.0
+PORT=4177
+DATA_DIR=/app/data
 BASIC_AUTH_USER
 BASIC_AUTH_PASS
-```
-
-Preview should also have:
-
-```text
-BLOB_READ_WRITE_TOKEN
-BASIC_AUTH_USER
-BASIC_AUTH_PASS
-```
-
-As of `2026-07-27`, production has all three. Preview has `BLOB_READ_WRITE_TOKEN`; add preview Basic Auth before relying on preview deployments.
-
-Check environment variables without printing secret values:
-
-```sh
-npx vercel env list production --scope denis-cumulus
-npx vercel env list preview --scope denis-cumulus
 ```
 
 Optional email notification variables:
@@ -126,180 +124,220 @@ SMTP_TO
 SMTP_SECURE
 ```
 
-Do not commit `.env.local`, `.vercel/`, `data/`, or any token files.
-
-## Vercel Blob Storage
-
-The app uses local JSON files in development. On Vercel, it uses private Vercel Blob storage when `BLOB_READ_WRITE_TOKEN` exists.
-
-Create and connect the private Blob store if it does not exist:
-
-```sh
-npx vercel blob create-store dmca-data \
-  --access private \
-  --yes \
-  --environment production \
-  --environment preview \
-  --scope denis-cumulus
-```
-
-Pull production env locally before seeding Blob:
-
-```sh
-npx vercel env pull .env.local --environment=production --yes --scope denis-cumulus
-```
-
-Seed the private Blob store from the local JSON database:
-
-```sh
-node --input-type=module -e '
-import { readFile } from "node:fs/promises";
-import { put } from "@vercel/blob";
-
-const env = await readFile(".env.local", "utf8");
-const tokenLine = env.split(/\n/).find((line) => line.startsWith("BLOB_READ_WRITE_TOKEN="));
-if (!tokenLine) throw new Error("Missing BLOB_READ_WRITE_TOKEN");
-process.env.BLOB_READ_WRITE_TOKEN = tokenLine.slice("BLOB_READ_WRITE_TOKEN=".length).replace(/^"|"$/g, "");
-
-const files = [
-  "config.json",
-  "portfolio.json",
-  "cases.json",
-  "history.json",
-  "url-audits.json",
-  "serp-audits.json",
-  "lumen-claims.json"
-];
-
-for (const name of files) {
-  const body = await readFile(`data/${name}`, "utf8");
-  await put(`data/${name}`, body, {
-    access: "private",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json"
-  });
-  console.log(`uploaded ${name}`);
-}
-'
-```
-
-Do not upload `data/secrets.json` unless there is a deliberate reason.
-
-Confirm Blob data exists:
-
-```sh
-node --input-type=module -e '
-import { readFile } from "node:fs/promises";
-import { list } from "@vercel/blob";
-
-const env = await readFile(".env.local", "utf8");
-const tokenLine = env.split(/\n/).find((line) => line.startsWith("BLOB_READ_WRITE_TOKEN="));
-process.env.BLOB_READ_WRITE_TOKEN = tokenLine.slice("BLOB_READ_WRITE_TOKEN=".length).replace(/^"|"$/g, "");
-
-const result = await list({ prefix: "data/", limit: 20 });
-console.log(result.blobs.map((blob) => blob.pathname).sort().join("\n"));
-'
-```
-
-Expected files:
+Optional third-party variables:
 
 ```text
-data/cases.json
-data/config.json
-data/history.json
-data/lumen-claims.json
-data/portfolio.json
-data/serp-audits.json
-data/url-audits.json
+APIFY_TOKEN
+LUMEN_AUTH_TOKEN
 ```
 
-## Build And Deploy
+Do not commit `.env`, `data/`, `.vercel/`, screenshots, or logs.
 
-- Pull production settings:
+## Seed Existing Data
+
+The Docker image intentionally does not include `data/`. The live server must keep JSON state on a mounted volume.
+
+From a machine that has the current local app data, seed the server:
 
 ```sh
-npx vercel pull --yes --environment=production --scope denis-cumulus
+rsync -av \
+  --exclude 'backups/' \
+  --exclude 'exports/' \
+  --exclude 'secrets.json' \
+  data/config.json \
+  data/portfolio.json \
+  data/cases.json \
+  data/history.json \
+  data/url-audits.json \
+  data/serp-audits.json \
+  data/lumen-claims.json \
+  USER@SERVER_IP:/opt/dmca/data/
 ```
 
-- Build production output:
+Only copy `data/secrets.json` if you intentionally want to migrate local stored tokens. Prefer env vars for secrets.
 
-```sh
-npx vercel build --prod --yes --scope denis-cumulus
-```
-
-- Deploy prebuilt output to production:
-
-```sh
-npx vercel deploy --prebuilt --prod --yes --scope denis-cumulus
-```
-
-- Inspect latest deployment:
-
-```sh
-npx vercel ls dmca --scope denis-cumulus
-npx vercel inspect https://dmca-murex.vercel.app --scope denis-cumulus
-```
-
-## GitHub-Controlled Deploys
-
-The Vercel project is connected to:
+Expected current seeded state:
 
 ```text
-https://github.com/deniscumulus/dmca
+portfolio domains: 190
+claim notices: 551+
 ```
 
-After this repo contains the Vercel changes, normal flow should be:
+## Build And Start
+
+From `/opt/dmca`:
 
 ```sh
-git status
-git add api/index.js vercel.json server.mjs lib/store.mjs package.json package-lock.json .gitignore DEPLOYMENT_CHECKLIST.md
-git commit -m "Prepare DMCA app for Vercel deployment"
-git push origin main
+docker compose build
+docker compose up -d
 ```
 
-Then Vercel should build/deploy from GitHub.
-
-## Post-Deploy Verification
-
-- Production should require Basic Auth:
+Confirm the container is running:
 
 ```sh
-curl -I https://dmca-murex.vercel.app/
+docker compose ps
+docker compose logs --tail=100 dmca
+```
+
+Confirm local server response on the VPS:
+
+```sh
+curl -I http://127.0.0.1:4177/
+```
+
+Expected with Basic Auth enabled:
+
+```text
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Basic realm="DMCA Claims Queue"
+```
+
+Confirm seeded state with credentials:
+
+```sh
+curl -s -u "$BASIC_AUTH_USER:$BASIC_AUTH_PASS" http://127.0.0.1:4177/api/state \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const x=JSON.parse(s); console.log({domains:x.portfolio.domains.length, claims:Object.keys(x.lumenClaims.notices||{}).length, dataDir:x.dataDir});})'
 ```
 
 Expected:
 
 ```text
-HTTP/2 401
+domains: 190
+claims: 551+
+dataDir: /app/data
 ```
 
-- With valid Basic Auth, `/api/state` should return seeded data:
+## Reverse Proxy
 
-```sh
-curl -s -u "$BASIC_AUTH_USER:$BASIC_AUTH_PASS" https://dmca-murex.vercel.app/api/state \
-  | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const x=JSON.parse(s); console.log({domains:x.portfolio.domains.length, claims:Object.keys(x.lumenClaims.notices||{}).length, dataDir:x.dataDir});})'
+Put the app behind Nginx, Caddy, Traefik, or Cloudflare Tunnel.
+
+Nginx example:
+
+```nginx
+server {
+  listen 80;
+  server_name dmca.example.com;
+
+  client_max_body_size 20m;
+
+  location / {
+    proxy_pass http://127.0.0.1:4177;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
 ```
 
-Expected initial seeded state:
+Then add TLS with Certbot or your existing proxy automation.
+
+## Daily Automation
+
+On VPS/Docker, the local scheduler inside `server.mjs` runs while the container is up.
+
+Checklist:
+
+- `scheduleEnabled` should be `true` in `data/config.json`.
+- `dailyAt` should be set to the desired time.
+- Container timezone defaults to UTC unless configured by the host/container environment.
+- Use server logs to confirm scheduled checks.
+
+Optional timezone setting in `.env`:
 
 ```text
-domains: 190
-claims: 551
+TZ=Europe/Belgrade
 ```
 
-## Important Vercel Limitations
+If strict scheduling matters, add `TZ=Europe/Belgrade` to `.env` and ensure Docker Compose passes it through.
 
-- The local `setInterval` daily scheduler only runs under `npm start`. It does not run as a long-running process on Vercel.
-- To make the daily scan automatic on Vercel, add a Vercel Cron endpoint and a `crons` entry in `vercel.json`.
-- Browser-based scans should be tested in production logs. The Vercel build completed, but Playwright/Chromium runtime behavior must be verified after deployment.
-- If the dashboard loads but data is empty, check `BLOB_READ_WRITE_TOKEN` and the private Blob seed files.
-- If preview deployments are public, add `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` to Preview env too.
+## Update Flow
 
-## Quick Troubleshooting
+Use this for future code updates:
 
-- `project_settings_required`: run `npx vercel pull --yes --environment=production --scope denis-cumulus`.
-- Blank data after deploy: seed Vercel Blob again and confirm `data/*.json` blobs exist.
-- `401` in browser: Basic Auth is enabled; use the production username/password from Vercel env owner.
-- GitHub push does not deploy: confirm Vercel Git connection under Project Settings and inspect latest GitHub deployment in Vercel.
-- Docker confusion: ignore `Dockerfile` for Vercel. Use it only for Render/VPS/container hosting.
+```sh
+cd /opt/dmca
+git pull origin main
+docker compose build
+docker compose up -d
+docker compose logs --tail=100 dmca
+```
+
+Do not delete `/opt/dmca/data`.
+
+Before risky updates, back up the data directory:
+
+```sh
+tar -czf "dmca-data-backup-$(date +%F-%H%M).tar.gz" data
+```
+
+## Rollback
+
+List commits:
+
+```sh
+git log --oneline -10
+```
+
+Rollback code only:
+
+```sh
+git checkout COMMIT_SHA
+docker compose build
+docker compose up -d
+```
+
+Rollback data only:
+
+```sh
+docker compose down
+mv data "data-before-rollback-$(date +%F-%H%M)"
+tar -xzf dmca-data-backup-YYYY-MM-DD-HHMM.tar.gz
+docker compose up -d
+```
+
+## Logs And Debugging
+
+Runtime logs:
+
+```sh
+docker compose logs -f dmca
+```
+
+Container shell:
+
+```sh
+docker compose exec dmca bash
+```
+
+Check mounted data from inside the container:
+
+```sh
+docker compose exec dmca ls -lah /app/data
+```
+
+Check app state:
+
+```sh
+docker compose exec dmca node -e 'fetch("http://127.0.0.1:4177/api/state", {headers:{Authorization:"Basic "+Buffer.from(process.env.BASIC_AUTH_USER+":"+process.env.BASIC_AUTH_PASS).toString("base64")}}).then(r=>r.json()).then(x=>console.log({domains:x.portfolio.domains.length, claims:Object.keys(x.lumenClaims.notices||{}).length, dataDir:x.dataDir})).catch(e=>{console.error(e); process.exit(1);})'
+```
+
+## Common Failure Cases
+
+- Dashboard asks for login: expected if Basic Auth is enabled.
+- Dashboard returns empty data: mounted `/app/data` is empty or wrong `DATA_DIR`.
+- Data resets after deploy: `data` directory is not mounted as a persistent volume.
+- Browser scan fails: check outbound network, Playwright logs, and whether the Docker image is the Playwright base image.
+- Claim scan is slow: expected for first full run; later runs reuse cached `domain + requestId` rows.
+- App writes to Vercel Blob on VPS: remove `BLOB_READ_WRITE_TOKEN` from `.env`.
+- Nginx returns 502: container is down, wrong `PUBLIC_PORT`, or proxy points to the wrong upstream.
+
+## Security Checklist
+
+- Basic Auth set before exposing public domain.
+- `.env` never committed.
+- `data/secrets.json` not copied unless intentionally needed.
+- VPS firewall only exposes SSH, HTTP, and HTTPS.
+- Docker port `4177` preferably bound behind reverse proxy only.
+- Regular backups of `/opt/dmca/data`.

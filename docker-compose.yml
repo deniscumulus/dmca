@@ -1,0 +1,30 @@
+services:
+  dmca:
+    build:
+      context: .
+    image: dmca-claims-queue:latest
+    container_name: dmca-claims-queue
+    restart: unless-stopped
+    init: true
+    shm_size: "1gb"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4177
+      DATA_DIR: /app/data
+    ports:
+      - "${PUBLIC_PORT:-4177}:4177"
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:4177/').then((response) => process.exit([200,401].includes(response.status) ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
