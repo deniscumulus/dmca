@@ -18,7 +18,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.OVH_SERVER_IP }}
           REMOTE_USER: "ubuntu"
-          SOURCE: "dmca/"
+          SOURCE: "."
           TARGET: "/opt/dmca"
           EXCLUDE: "/data/"
           ARGS: "-rlgoDzvO --delete"
