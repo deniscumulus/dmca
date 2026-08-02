@@ -1,0 +1,35 @@
+name: Deploy DMCA
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Sync Files to OVH VPS
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.OVH_SERVER_IP }}
+          REMOTE_USER: "ubuntu"
+          SOURCE: "dmca/"
+          TARGET: "/opt/dmca"
+          EXCLUDE: "/data/"
+          ARGS: "-rlgoDzvO --delete"
+
+      - name: Rebuild and Restart Docker Container
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.OVH_SERVER_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.OVH_SSH_KEY }}
+          script: |
+            cd /opt/dmca
+            docker compose down
+            docker compose up -d --build
