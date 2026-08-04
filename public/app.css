@@ -145,6 +145,10 @@ a:hover {
   gap: 8px;
 }
 
+.claim-summary[hidden] {
+  display: none;
+}
+
 .status-rail {
   justify-content: flex-end;
 }

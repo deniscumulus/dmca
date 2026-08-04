@@ -150,7 +150,7 @@ function render() {
     : "Scan all claims";
 
   renderDomains(portfolio.domains);
-  renderClaimSummary(claims, status);
+  renderClaimSummary(status);
   renderClaims();
 }
 
@@ -172,8 +172,9 @@ function renderDomains(domains) {
     .join("");
 }
 
-function renderClaimSummary(claims, status) {
+function renderClaimSummary(status) {
   if (status.running) {
+    elements.claimSummary.hidden = false;
     const scanLabel = status.stage === "portfolio" ? "Checking portfolio" : "Scanning claims";
     const domain = status.currentDomain ? ` · ${escapeHtml(status.currentDomain)}` : "";
     const request = status.currentRequestId ? ` · request ${escapeHtml(status.currentRequestId)}` : "";
@@ -186,20 +187,8 @@ function renderClaimSummary(claims, status) {
     return;
   }
 
-  const latestRun = claims.runs?.[0] || null;
-  if (!latestRun) {
-    elements.claimSummary.innerHTML = emptyState("No claims queue yet.");
-    return;
-  }
-
-  const metrics = summarizeClaims(claims);
-  elements.claimSummary.innerHTML = `
-    <span class="tracking-chip detected">Claimed domains <strong>${formatNumber(metrics.claimedDomains)}</strong></span>
-    <span class="tracking-chip detected">Claimed URLs <strong>${formatNumber(metrics.claimedUrls)}</strong></span>
-    <span class="tracking-chip to_review">To review <strong>${formatNumber(metrics.toReview)}</strong></span>
-    <span class="tracking-chip claim_submitted">Claim submitted <strong>${formatNumber(metrics.claimSubmitted)}</strong></span>
-    <span class="tracking-chip resolved">Resolved <strong>${formatNumber(metrics.resolved)}</strong></span>
-  `;
+  elements.claimSummary.hidden = true;
+  elements.claimSummary.innerHTML = "";
 }
 
 function renderClaims() {
