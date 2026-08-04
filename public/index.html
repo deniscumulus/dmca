@@ -13,12 +13,12 @@
         <h1>DMCA Cumulus</h1>
       </div>
       <div class="status-rail" aria-live="polite">
-        <span class="chip" id="siteCountChip">0 portfolio sites</span>
-        <span class="chip warn" id="claimCountChip">0 claimed domains</span>
-        <span class="chip" id="claimedUrlCountChip">0 claimed URLs</span>
-        <span class="chip" id="reviewCountChip">0 to review</span>
-        <span class="chip" id="submittedCountChip">0 claim submitted</span>
-        <span class="chip" id="resolvedCountChip">0 resolved</span>
+        <button class="chip" id="siteCountChip" type="button" data-top-filter="portfolio">0 portfolio sites</button>
+        <button class="chip warn" id="claimCountChip" type="button" data-top-filter="active">0 claimed domains</button>
+        <button class="chip" id="claimedUrlCountChip" type="button" data-top-filter="active">0 claimed URLs</button>
+        <button class="chip" id="reviewCountChip" type="button" data-top-filter="to_review">0 to review</button>
+        <button class="chip" id="submittedCountChip" type="button" data-top-filter="claim_submitted">0 claim submitted</button>
+        <button class="chip" id="resolvedCountChip" type="button" data-top-filter="resolved">0 resolved</button>
       </div>
     </header>
 
@@ -79,6 +79,7 @@
             <span>Status</span>
             <select id="statusFilter">
               <option value="all">All statuses</option>
+              <option value="active">Active claims</option>
               <option value="to_review">To review</option>
               <option value="claim_submitted">Claim submitted</option>
               <option value="resolved">Resolved</option>

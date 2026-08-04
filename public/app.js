@@ -5,6 +5,7 @@ const elements = {
   reviewCountChip: document.querySelector("#reviewCountChip"),
   submittedCountChip: document.querySelector("#submittedCountChip"),
   resolvedCountChip: document.querySelector("#resolvedCountChip"),
+  statusRail: document.querySelector(".status-rail"),
   domainCount: document.querySelector("#domainCount"),
   domainForm: document.querySelector("#domainForm"),
   domainInput: document.querySelector("#domainInput"),
@@ -111,7 +112,13 @@ function bindEvents() {
     }
   });
 
-  elements.statusFilter.addEventListener("change", renderClaims);
+  elements.statusRail.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-top-filter]");
+    if (!chip) return;
+    applyTopFilter(chip.dataset.topFilter);
+  });
+
+  elements.statusFilter.addEventListener("change", render);
   elements.claimSearch.addEventListener("input", renderClaims);
 
   elements.claimsList.addEventListener("change", async (event) => {
@@ -138,9 +145,7 @@ function render() {
   elements.reviewCountChip.textContent = `${formatNumber(metrics.toReview)} to review`;
   elements.submittedCountChip.textContent = `${formatNumber(metrics.claimSubmitted)} claim submitted`;
   elements.resolvedCountChip.textContent = `${formatNumber(metrics.resolved)} resolved`;
-  elements.reviewCountChip.className = `chip ${metrics.toReview > 0 ? "warn" : "ok"}`;
-  elements.submittedCountChip.className = `chip ${metrics.claimSubmitted > 0 ? "submitted" : ""}`;
-  elements.resolvedCountChip.className = `chip ${metrics.resolved > 0 ? "ok" : ""}`;
+  renderTopFilterState(metrics);
   elements.domainCount.textContent = formatNumber(portfolio.domains.length);
 
   elements.scanClaimsButton.disabled = Boolean(status.running);
@@ -152,6 +157,40 @@ function render() {
   renderDomains(portfolio.domains);
   renderClaimSummary(status);
   renderClaims();
+}
+
+function renderTopFilterState(metrics) {
+  const activeFilter = elements.statusFilter.value;
+
+  elements.siteCountChip.className = "chip";
+  elements.siteCountChip.setAttribute("aria-pressed", "false");
+  elements.claimCountChip.className = `chip ${metrics.claimedDomains > 0 ? "warn" : ""}${activeFilter === "active" ? " active" : ""}`;
+  elements.claimedUrlCountChip.className = `chip ${activeFilter === "active" ? "active" : ""}`;
+  elements.reviewCountChip.className = `chip ${metrics.toReview > 0 ? "warn" : "ok"}${activeFilter === "to_review" ? " active" : ""}`;
+  elements.submittedCountChip.className = `chip ${metrics.claimSubmitted > 0 ? "submitted" : ""}${activeFilter === "claim_submitted" ? " active" : ""}`;
+  elements.resolvedCountChip.className = `chip ${metrics.resolved > 0 ? "ok" : ""}${activeFilter === "resolved" ? " active" : ""}`;
+
+  for (const chip of elements.statusRail.querySelectorAll("[data-top-filter]")) {
+    const filter = chip.dataset.topFilter;
+    chip.setAttribute("aria-pressed", String(activeFilter === filter));
+  }
+}
+
+function applyTopFilter(filter) {
+  if (filter === "portfolio") {
+    elements.claimSearch.value = "";
+    document.querySelector(".portfolio-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    showToast("Showing portfolio sites.");
+    renderTopFilterState(summarizeClaims(state?.lumenClaims || { notices: {}, runs: [] }));
+    return;
+  }
+
+  const nextFilter = filter === "active" || CLAIM_STATUS_META[filter] ? filter : "all";
+  elements.statusFilter.value = nextFilter;
+  elements.claimSearch.value = "";
+  render();
+  document.querySelector(".claims-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  showToast(nextFilter === "active" ? "Showing active claimed sites." : `Showing ${getFilterLabel(nextFilter).toLowerCase()} sites.`);
 }
 
 function renderDomains(domains) {
@@ -199,7 +238,8 @@ function renderClaims() {
   const notices = getCurrentClaimNotices(claims)
     .filter((notice) => {
       const reviewStatus = getClaimReviewStatus(notice);
-      if (statusFilter !== "all" && reviewStatus !== statusFilter) return false;
+      if (statusFilter === "active" && reviewStatus === "resolved") return false;
+      if (statusFilter !== "all" && statusFilter !== "active" && reviewStatus !== statusFilter) return false;
       if (!search) return true;
       return [notice.domain, notice.noticeId, notice.requestId, notice.copyrightOwner, notice.reportingOrganization]
         .filter(Boolean)
@@ -267,7 +307,7 @@ function renderClaimStatusOptions(activeStatus) {
 
 async function saveClaimStatus(noticeId, reviewStatus) {
   updateLocalClaimStatus(noticeId, reviewStatus);
-  renderClaims();
+  render();
 
   try {
     await api(`/api/lumen-claims/${encodeURIComponent(noticeId)}`, {
@@ -307,6 +347,12 @@ function getClaimReviewStatus(notice) {
 
 function getClaimStatusMeta(status) {
   return CLAIM_STATUS_META[status] || CLAIM_STATUS_META.to_review;
+}
+
+function getFilterLabel(filter) {
+  if (filter === "all") return "All claimed";
+  if (filter === "active") return "Active claimed";
+  return getClaimStatusMeta(filter).label;
 }
 
 function getCurrentClaimNotices(claims) {

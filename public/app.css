@@ -172,6 +172,15 @@ a:hover {
   gap: 6px;
 }
 
+.chip {
+  cursor: pointer;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .chip.ok,
 .tracking-chip.resolved,
 .status-pill.resolved {
@@ -202,6 +211,11 @@ a:hover {
   border-color: rgba(15, 118, 110, 0.28);
   color: var(--accent);
   background: #ecfdf5;
+}
+
+.chip.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
 
 .workspace {
