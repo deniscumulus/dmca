@@ -144,8 +144,9 @@ function render() {
   elements.domainCount.textContent = formatNumber(portfolio.domains.length);
 
   elements.scanClaimsButton.disabled = Boolean(status.running);
+  const scanLabel = status.stage === "portfolio" ? "Checking portfolio" : "Scanning claims";
   elements.scanClaimsButton.textContent = status.running
-    ? `Scanning ${status.checkedDomains || 0}/${status.totalDomains || 0}`
+    ? `${scanLabel} ${status.checkedDomains || 0}/${status.totalDomains || 0}`
     : "Scan all claims";
 
   renderDomains(portfolio.domains);
@@ -173,10 +174,11 @@ function renderDomains(domains) {
 
 function renderClaimSummary(claims, status) {
   if (status.running) {
+    const scanLabel = status.stage === "portfolio" ? "Checking portfolio" : "Scanning claims";
     const domain = status.currentDomain ? ` · ${escapeHtml(status.currentDomain)}` : "";
     const request = status.currentRequestId ? ` · request ${escapeHtml(status.currentRequestId)}` : "";
     elements.claimSummary.innerHTML = `
-      <span class="tracking-chip in_progress">Running <strong>${formatNumber(status.checkedDomains || 0)}/${formatNumber(status.totalDomains || 0)}</strong></span>
+      <span class="tracking-chip in_progress">${escapeHtml(scanLabel)} <strong>${formatNumber(status.checkedDomains || 0)}/${formatNumber(status.totalDomains || 0)}</strong></span>
       <span class="tracking-chip detected">Notices <strong>${formatNumber(status.noticeCount || 0)}</strong></span>
       <span class="tracking-chip claim_submitted">New <strong>${formatNumber(status.newNoticeCount || 0)}</strong></span>
       <span class="summary-text">${domain}${request}</span>

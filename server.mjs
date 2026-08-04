@@ -119,7 +119,7 @@ async function routeApi(request, response, url) {
   }
 
   if (request.method === "POST" && url.pathname === "/api/check") {
-    if (activeRun) {
+    if (activeRun || activeLumenClaimsScan) {
       sendJson(response, 409, { error: "A check is already running." });
       return;
     }
@@ -165,18 +165,20 @@ async function routeApi(request, response, url) {
   }
 
   if (request.method === "POST" && url.pathname === "/api/lumen-claims/scan") {
-    if (activeLumenClaimsScan) {
+    if (activeRun || activeLumenClaimsScan) {
       sendJson(response, 409, { error: "A Lumen claims queue scan is already running." });
       return;
     }
 
     const body = await readJsonBody(request);
-    const lumenClaimsStatus = startLumenClaimsScan({
+    const scanOptions = {
       source: body.source || "manual",
       domains: body.domains,
       limit: body.limit,
       maxRequestsPerDomain: body.maxRequestsPerDomain
-    });
+    };
+    const lumenClaimsStatus =
+      body.refreshPortfolio === false ? startLumenClaimsScan(scanOptions) : startFullLumenClaimsScan(scanOptions);
     sendJson(response, 202, { lumenClaimsStatus });
     return;
   }
@@ -343,6 +345,147 @@ function startRun(options) {
     });
 
   return activeRunStatus;
+}
+
+function startFullLumenClaimsScan(options) {
+  const source = options.source || "manual";
+  activeLumenClaimsStatus = {
+    running: true,
+    stage: "portfolio",
+    phase: "portfolio_queued",
+    source,
+    checkedDomains: 0,
+    totalDomains: 0,
+    noticeCount: 0,
+    newNoticeCount: 0,
+    cachedRequestCount: 0,
+    refreshedRequestCount: 0,
+    currentDomain: null,
+    currentRequestId: null,
+    startedAt: new Date().toISOString()
+  };
+
+  activeRunStatus = {
+    running: true,
+    phase: "queued",
+    source,
+    checked: 0,
+    totalDomains: 0,
+    currentDomain: null,
+    startedAt: activeLumenClaimsStatus.startedAt
+  };
+
+  activeLumenClaimsScan = (async () => {
+    const portfolioRun = await runPortfolioCheck({
+      source,
+      domains: options.domains,
+      onProgress(progress) {
+        activeRunStatus = {
+          ...activeRunStatus,
+          ...progress,
+          running: progress.phase !== "finished",
+          updatedAt: new Date().toISOString()
+        };
+        activeLumenClaimsStatus = {
+          ...activeLumenClaimsStatus,
+          running: true,
+          stage: "portfolio",
+          phase: `portfolio_${progress.phase || "running"}`,
+          checkedDomains: Number(progress.checked || 0),
+          totalDomains: Number(progress.totalDomains || activeLumenClaimsStatus.totalDomains || 0),
+          currentDomain: progress.currentDomain || null,
+          currentRequestId: null,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    });
+
+    activeRunStatus = {
+      ...activeRunStatus,
+      running: false,
+      phase: "finished",
+      checked: portfolioRun.totalDomains,
+      totalDomains: portfolioRun.totalDomains,
+      currentDomain: null,
+      runId: portfolioRun.id,
+      status: portfolioRun.status,
+      finishedAt: portfolioRun.finishedAt,
+      updatedAt: new Date().toISOString()
+    };
+
+    activeLumenClaimsStatus = {
+      ...activeLumenClaimsStatus,
+      running: true,
+      stage: "claims",
+      phase: "claims_queued",
+      checkedDomains: 0,
+      totalDomains: 0,
+      currentDomain: null,
+      currentRequestId: null,
+      updatedAt: new Date().toISOString()
+    };
+
+    const claimsRun = await runLumenClaimsQueueScan({
+      ...options,
+      source,
+      limit: options.limit ?? 0,
+      onProgress(progress) {
+        activeLumenClaimsStatus = {
+          ...activeLumenClaimsStatus,
+          ...progress,
+          running: progress.phase !== "finished",
+          stage: "claims",
+          updatedAt: new Date().toISOString()
+        };
+      }
+    });
+
+    activeLumenClaimsStatus = {
+      ...activeLumenClaimsStatus,
+      running: false,
+      stage: "claims",
+      phase: "finished",
+      checkedDomains: claimsRun.checkedDomains,
+      totalDomains: claimsRun.totalDomains,
+      noticeCount: claimsRun.noticeCount,
+      newNoticeCount: claimsRun.newNoticeCount,
+      cachedRequestCount: claimsRun.cachedRequestCount,
+      refreshedRequestCount: claimsRun.refreshedRequestCount,
+      currentDomain: null,
+      currentRequestId: null,
+      runId: claimsRun.id,
+      portfolioRunId: portfolioRun.id,
+      status: claimsRun.status,
+      finishedAt: claimsRun.finishedAt,
+      updatedAt: new Date().toISOString()
+    };
+
+    return claimsRun;
+  })()
+    .catch((error) => {
+      console.error("Full claims queue scan failed:", error.message);
+      activeRunStatus = {
+        ...activeRunStatus,
+        running: false,
+        phase: "failed",
+        error: error.message,
+        updatedAt: new Date().toISOString()
+      };
+      activeLumenClaimsStatus = {
+        ...activeLumenClaimsStatus,
+        running: false,
+        phase: "failed",
+        error: error.message,
+        updatedAt: new Date().toISOString()
+      };
+      return null;
+    })
+    .finally(() => {
+      activeRun = null;
+      activeLumenClaimsScan = null;
+    });
+
+  return activeLumenClaimsStatus;
 }
 
 function startUrlAudit(options) {
