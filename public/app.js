@@ -2,7 +2,6 @@ const elements = {
   siteCountChip: document.querySelector("#siteCountChip"),
   claimCountChip: document.querySelector("#claimCountChip"),
   claimedUrlCountChip: document.querySelector("#claimedUrlCountChip"),
-  reviewCountChip: document.querySelector("#reviewCountChip"),
   submittedCountChip: document.querySelector("#submittedCountChip"),
   resolvedCountChip: document.querySelector("#resolvedCountChip"),
   statusRail: document.querySelector(".status-rail"),
@@ -142,7 +141,6 @@ function render() {
   elements.siteCountChip.textContent = `${formatNumber(portfolio.domains.length)} portfolio sites`;
   elements.claimCountChip.textContent = `${formatNumber(metrics.claimedDomains)} claimed domains`;
   elements.claimedUrlCountChip.textContent = `${formatNumber(metrics.claimedUrls)} claimed URLs`;
-  elements.reviewCountChip.textContent = `${formatNumber(metrics.toReview)} to review`;
   elements.submittedCountChip.textContent = `${formatNumber(metrics.claimSubmitted)} claim submitted`;
   elements.resolvedCountChip.textContent = `${formatNumber(metrics.resolved)} resolved`;
   renderTopFilterState(metrics);
@@ -166,7 +164,6 @@ function renderTopFilterState(metrics) {
   elements.siteCountChip.setAttribute("aria-pressed", "false");
   elements.claimCountChip.className = `chip ${metrics.claimedDomains > 0 ? "warn" : ""}${activeFilter === "active" ? " active" : ""}`;
   elements.claimedUrlCountChip.className = `chip ${activeFilter === "active" ? "active" : ""}`;
-  elements.reviewCountChip.className = `chip ${metrics.toReview > 0 ? "warn" : "ok"}${activeFilter === "to_review" ? " active" : ""}`;
   elements.submittedCountChip.className = `chip ${metrics.claimSubmitted > 0 ? "submitted" : ""}${activeFilter === "claim_submitted" ? " active" : ""}`;
   elements.resolvedCountChip.className = `chip ${metrics.resolved > 0 ? "ok" : ""}${activeFilter === "resolved" ? " active" : ""}`;
 
