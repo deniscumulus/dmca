@@ -189,7 +189,7 @@ Expected with Basic Auth enabled:
 
 ```text
 HTTP/1.1 401 Unauthorized
-WWW-Authenticate: Basic realm="DMCA Claims Queue"
+WWW-Authenticate: Basic realm="DMCA Cumulus"
 ```
 
 Confirm seeded state with credentials:

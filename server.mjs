@@ -53,7 +53,7 @@ export async function handleRequest(request, response) {
     if (!isAuthorized(request)) {
       response.writeHead(401, {
         "Content-Type": "text/plain; charset=utf-8",
-        "WWW-Authenticate": 'Basic realm="DMCA Claims Queue"'
+        "WWW-Authenticate": 'Basic realm="DMCA Cumulus"'
       });
       response.end("Authentication required");
       return;
