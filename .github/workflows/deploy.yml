@@ -20,7 +20,7 @@ jobs:
           REMOTE_USER: "ubuntu"
           SOURCE: "."
           TARGET: "/opt/dmca"
-          EXCLUDE: "/data/.env"
+          EXCLUDE: ".env"
           ARGS: "-rlgoDzvO --delete"
 
       - name: Rebuild and Restart Docker Container
