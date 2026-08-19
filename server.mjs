@@ -28,6 +28,7 @@ const PORT = Number(process.env.PORT || 4177);
 const HOST = process.env.HOST || "0.0.0.0";
 const BASIC_AUTH_USER = String(process.env.BASIC_AUTH_USER || "").trim();
 const BASIC_AUTH_PASS = String(process.env.BASIC_AUTH_PASS || "").trim();
+const SERVER_SCHEDULER_ENABLED = process.env.SERVER_SCHEDULER_ENABLED === "true";
 
 let activeRun = null;
 let activeRunStatus = {
@@ -85,11 +86,13 @@ if (isCliEntrypoint()) {
     console.log(`Copyright Portfolio Monitor running at http://${displayHost}:${PORT}`);
   });
 
-  setInterval(() => {
-    checkSchedule().catch((error) => {
-      console.error("Scheduled check failed:", error.message);
-    });
-  }, 30000);
+  if (SERVER_SCHEDULER_ENABLED) {
+    setInterval(() => {
+      checkSchedule().catch((error) => {
+        console.error("Scheduled check failed:", error.message);
+      });
+    }, 30000);
+  }
 }
 
 async function routeApi(request, response, url) {

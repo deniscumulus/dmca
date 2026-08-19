@@ -235,10 +235,11 @@ Then add TLS with Certbot or your existing proxy automation.
 
 ## Daily Automation
 
-On VPS/Docker, the local scheduler inside `server.mjs` runs while the container is up.
+On VPS/Docker, the local scheduler inside `server.mjs` runs only when `SERVER_SCHEDULER_ENABLED=true`.
 
 Checklist:
 
+- `SERVER_SCHEDULER_ENABLED` should be `false` to pause daily checks, or `true` to run them.
 - `scheduleEnabled` should be `true` in `data/config.json`.
 - `dailyAt` should be set to the desired time.
 - Container timezone defaults to UTC unless configured by the host/container environment.
