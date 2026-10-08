@@ -153,7 +153,7 @@ function render() {
     : "Scan all claims";
 
   renderDomains(portfolio.domains);
-  renderClaimSummary(status);
+  renderClaimSummary(status, claims);
   renderClaims();
 }
 
@@ -208,7 +208,7 @@ function renderDomains(domains) {
     .join("");
 }
 
-function renderClaimSummary(status) {
+function renderClaimSummary(status, claims) {
   if (status.running) {
     elements.claimSummary.hidden = false;
     const scanLabel = status.stage === "portfolio" ? "Checking portfolio" : "Scanning claims";
