@@ -372,7 +372,8 @@ function getCurrentClaimNotices(claims) {
       runNoticeIds.size === 0 ||
       runNoticeIds.has(getClaimKey(notice)) ||
       runNoticeIds.has(notice.noticeId) ||
-      getClaimReviewStatus(notice) === "resolved"
+      getClaimReviewStatus(notice) === "resolved" ||
+      getClaimReviewStatus(notice) === "claim_submitted"
   );
 }
 
