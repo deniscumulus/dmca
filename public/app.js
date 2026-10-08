@@ -22,7 +22,7 @@ const elements = {
 
 const CLAIM_STATUS_META = {
   to_review: { label: "To review", className: "to_review" },
-  claim_submitted: { label: "Claim submitted", className: "claim_submitted" },
+  claim_submitted: { label: "Counter notice filed", className: "claim_submitted" },
   resolved: { label: "Resolved", className: "resolved" }
 };
 
@@ -141,7 +141,7 @@ function render() {
   elements.siteCountChip.textContent = `${formatNumber(portfolio.domains.length)} portfolio sites`;
   elements.claimCountChip.textContent = `${formatNumber(metrics.claimedDomains)} claimed domains`;
   elements.claimedUrlCountChip.textContent = `${formatNumber(metrics.claimedUrls)} claimed URLs`;
-  elements.submittedCountChip.textContent = `${formatNumber(metrics.claimSubmitted)} claim submitted`;
+  elements.submittedCountChip.textContent = `${formatNumber(metrics.claimSubmitted)} counter notice filed`;
   elements.resolvedCountChip.textContent = `${formatNumber(metrics.resolved)} resolved`;
   renderTopFilterState(metrics);
   elements.domainCount.textContent = formatNumber(portfolio.domains.length);
@@ -223,8 +223,20 @@ function renderClaimSummary(status) {
     return;
   }
 
-  elements.claimSummary.hidden = true;
-  elements.claimSummary.innerHTML = "";
+  const latestRun = claims.runs?.[0] || null;
+  if (!latestRun) {
+    elements.claimSummary.innerHTML = emptyState("No claims queue yet.");
+    return;
+  }
+
+  const metrics = summarizeClaims(claims);
+  elements.claimSummary.innerHTML = `
+    <span class="tracking-chip detected">Claimed domains <strong>${formatNumber(metrics.claimedDomains)}</strong></span>
+    <span class="tracking-chip detected">Claimed URLs <strong>${formatNumber(metrics.claimedUrls)}</strong></span>
+    <span class="tracking-chip to_review">To review <strong>${formatNumber(metrics.toReview)}</strong></span>
+    <span class="tracking-chip claim_submitted">Counter notice filed <strong>${formatNumber(metrics.claimSubmitted)}</strong></span>
+    <span class="tracking-chip resolved">Resolved <strong>${formatNumber(metrics.resolved)}</strong></span>
+  `;
 }
 
 function renderClaims() {
@@ -356,7 +368,11 @@ function getCurrentClaimNotices(claims) {
   const latestRun = claims?.runs?.[0] || null;
   const runNoticeIds = new Set((latestRun?.domains || []).flatMap((domain) => domain.notices || []));
   return Object.values(claims?.notices || {}).filter(
-    (notice) => runNoticeIds.size === 0 || runNoticeIds.has(getClaimKey(notice)) || runNoticeIds.has(notice.noticeId)
+    (notice) =>
+      runNoticeIds.size === 0 ||
+      runNoticeIds.has(getClaimKey(notice)) ||
+      runNoticeIds.has(notice.noticeId) ||
+      getClaimReviewStatus(notice) === "resolved"
   );
 }
 
